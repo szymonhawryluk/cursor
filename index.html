@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rosnące drzewo 🌳</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  svg#scene {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ---------- interfejs ---------- */
+  .ui {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: #2c4a2e;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .ui h1 {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.7);
+  }
+
+  .ui p {
+    margin-top: 4px;
+    font-size: clamp(0.85rem, 2vw, 1.05rem);
+    opacity: 0.75;
+  }
+
+  #replant {
+    pointer-events: auto;
+    margin-top: 14px;
+    padding: 10px 22px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1d3b20;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(40, 80, 40, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  #replant:hover {
+    transform: translateY(-2px) scale(1.04);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 24px rgba(40, 80, 40, 0.25);
+  }
+
+  #replant:active { transform: scale(0.97); }
+
+  /* ---------- animacje sceny ---------- */
+  @keyframes sway {
+    from { transform: rotate(-0.7deg); }
+    to   { transform: rotate(0.7deg); }
+  }
+
+  #tree {
+    transform-origin: 500px 648px;
+    animation: sway 5.5s ease-in-out infinite alternate;
+  }
+
+  #leaves {
+    transform-origin: 500px 648px;
+    animation: sway 5.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes leafSway {
+    from { transform: rotate(-9deg); }
+    to   { transform: rotate(9deg); }
+  }
+
+  .leaf-sway {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: leafSway var(--d, 3s) ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    from { transform: translateX(-320px); }
+    to   { transform: translateX(1350px); }
+  }
+
+  .cloud { animation: drift linear infinite; }
+
+  @keyframes sunSpin { to { transform: rotate(360deg); } }
+
+  #sunRays {
+    transform-origin: 845px 110px;
+    animation: sunSpin 90s linear infinite;
+  }
+
+  @keyframes sunPulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.06); }
+  }
+
+  #sunGlow {
+    transform-origin: 845px 110px;
+    animation: sunPulse 4s ease-in-out infinite alternate;
+  }
+</style>
+</head>
+<body>
+
+<svg id="scene" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMax slice" aria-label="Animacja rosnącego drzewa">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#9fdcf2"/>
+      <stop offset="55%" stop-color="#cdeef7"/>
+      <stop offset="100%" stop-color="#fdf3d3"/>
+    </linearGradient>
+    <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a8d77f"/>
+      <stop offset="100%" stop-color="#7cb95c"/>
+    </linearGradient>
+    <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8cc763"/>
+      <stop offset="100%" stop-color="#5f9e43"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0%"  stop-color="#fff3b0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#fff3b0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- niebo -->
+  <rect x="0" y="0" width="1000" height="700" fill="url(#sky)"/>
+
+  <!-- słońce -->
+  <circle id="sunGlow" cx="845" cy="110" r="95" fill="url(#glow)"/>
+  <g id="sunRays" stroke="#ffd75e" stroke-width="4" stroke-linecap="round" opacity="0.85"></g>
+  <circle cx="845" cy="110" r="38" fill="#ffd75e"/>
+  <circle cx="845" cy="110" r="30" fill="#ffe48a"/>
+
+  <!-- chmury -->
+  <g id="clouds" fill="#ffffff" opacity="0.9"></g>
+
+  <!-- wzgórza -->
+  <path d="M0 645 Q 240 588 480 638 T 1000 628 L 1000 700 L 0 700 Z" fill="url(#hillBack)"/>
+  <path d="M0 672 Q 300 632 600 668 T 1000 660 L 1000 700 L 0 700 Z" fill="url(#hillFront)"/>
+
+  <!-- cień drzewa -->
+  <ellipse id="shadow" cx="500" cy="655" rx="95" ry="11" fill="#3c6b2e" opacity="0.25"/>
+
+  <!-- warstwy generowane skryptem -->
+  <g id="grass"></g>
+  <g id="tree" fill="none" stroke-linecap="round"></g>
+  <g id="leaves"></g>
+  <g id="falling"></g>
+</svg>
+
+<div class="ui">
+  <h1>🌳 Rosnące drzewo</h1>
+  <p>Każde drzewo wyrasta inne — wiatr, liście i kwiaty w komplecie.</p>
+  <button id="replant">🌱 Posadź nowe drzewo</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+
+  const treeG    = $("tree");
+  const leavesG  = $("leaves");
+  const fallingG = $("falling");
+  const grassG   = $("grass");
+  const shadow   = $("shadow");
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[(Math.random() * arr.length) | 0];
+
+  function el(name, attrs, parent) {
+    const node = document.createElementNS(NS, name);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  const GREENS   = ["#3e8f3e", "#4ca64c", "#5cb85c", "#6fc36f", "#388e3c", "#7ccb6e", "#2f7d33"];
+  const BLOSSOMS = ["#ffc4d6", "#ffd9e3", "#fff0f4", "#ffb3c9"];
+  const BASE_X = 500;
+  const BASE_Y = 648;
+
+  /* ---------- statyczne dekoracje (raz) ---------- */
+
+  function buildSunRays() {
+    const g = $("sunRays");
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      el("line", {
+        x1: 845 + Math.cos(a) * 48, y1: 110 + Math.sin(a) * 48,
+        x2: 845 + Math.cos(a) * 62, y2: 110 + Math.sin(a) * 62,
+      }, g);
+    }
+  }
+
+  function buildClouds() {
+    const data = [
+      { y: 95,  s: 1.0, dur: 95,  delay: -20, op: 0.95 },
+      { y: 170, s: 0.7, dur: 130, delay: -70, op: 0.8 },
+      { y: 60,  s: 0.55, dur: 75, delay: -45, op: 0.7 },
+    ];
+    for (const c of data) {
+      const g = el("g", { class: "cloud", opacity: c.op }, $("clouds"));
+      g.style.animationDuration = c.dur + "s";
+      g.style.animationDelay = c.delay + "s";
+      const inner = el("g", { transform: `translate(0 ${c.y}) scale(${c.s})` }, g);
+      el("ellipse", { cx: 0,  cy: 0,  rx: 52, ry: 22 }, inner);
+      el("ellipse", { cx: 40, cy: 6,  rx: 42, ry: 18 }, inner);
+      el("ellipse", { cx: -38, cy: 8, rx: 36, ry: 15 }, inner);
+      el("ellipse", { cx: 8,  cy: -14, rx: 34, ry: 16 }, inner);
+    }
+  }
+
+  /* ---------- trawa i kwiaty ---------- */
+
+  function buildGrass() {
+    grassG.innerHTML = "";
+    for (let i = 0; i < 80; i++) {
+      const x = rand(15, 985);
+      const y = 700 - (1 - Math.abs(x - 500) / 500) * rand(28, 44) - rand(0, 14);
+      const h = rand(9, 20);
+      const lean = rand(-6, 6);
+      const p = el("path", {
+        d: `M ${x} ${y} q ${lean} ${-h * 0.6} ${lean * 1.6} ${-h}`,
+        stroke: pick(["#4e9a3c", "#3f8a31", "#5fae4a"]),
+        "stroke-width": rand(1.4, 2.4),
+        "stroke-linecap": "round",
+        fill: "none",
+      }, grassG);
+      const L = p.getTotalLength();
+      p.style.strokeDasharray = L;
+      p.style.strokeDashoffset = L;
+      p.animate(
+        [{ strokeDashoffset: L }, { strokeDashoffset: 0 }],
+        { duration: rand(400, 800), delay: rand(0, 2600), easing: "ease-out", fill: "forwards" }
+      );
+    }
+    // drobne kwiatki na łące
+    for (let i = 0; i < 14; i++) {
+      const x = rand(40, 960);
+      if (Math.abs(x - 500) < 70) continue;
+      const y = rand(665, 692);
+      const g = el("g", {}, grassG);
+      const c = el("circle", { cx: x, cy: y, r: rand(2.5, 4), fill: pick(["#ffe066", "#ff8fab", "#fff", "#ffb347"]) }, g);
+      el("circle", { cx: x, cy: y, r: 1.2, fill: "#e8a13c" }, g);
+      g.style.transformBox = "fill-box";
+      g.style.transformOrigin = "center";
+      g.style.transform = "scale(0)";
+      g.animate(
+        [{ transform: "scale(0)" }, { transform: "scale(1.3)", offset: 0.7 }, { transform: "scale(1)" }],
+        { duration: 450, delay: rand(1500, 4000), easing: "ease-out", fill: "forwards" }
+      );
+    }
+  }
+
+  /* ---------- drzewo ---------- */
+
+  let fallTimer = null;
+  let timers = [];
+  let leafData = [];
+
+  function trunkColor(depth) {
+    // od ciemnego brązu pnia do jaśniejszych gałązek
+    const t = Math.min(depth / 8, 1);
+    const r = Math.round(91 + t * 55);
+    const g = Math.round(58 + t * 45);
+    const b = Math.round(36 + t * 30);
+    return `rgb(${r} ${g} ${b})`;
+  }
+
+  function buildTree() {
+    treeG.innerHTML = "";
+    leavesG.innerHTML = "";
+    fallingG.innerHTML = "";
+    if (fallTimer) clearInterval(fallTimer);
+    timers.forEach(clearTimeout);
+    timers = [];
+    leafData = [];
+
+    const MAX_DEPTH = 8;
+    const branches = [];
+    const leafSpots = [];
+
+    (function grow(x, y, angle, len, width, depth, t0) {
+      const x2 = x + Math.cos(angle) * len;
+      const y2 = y - Math.sin(angle) * len;
+      const perp = angle + Math.PI / 2;
+      const bend = rand(-0.22, 0.22) * len;
+      const mx = (x + x2) / 2 + Math.cos(perp) * bend;
+      const my = (y + y2) / 2 - Math.sin(perp) * bend;
+      const dur = Math.max(220, len * 11);
+
+      branches.push({ d: `M ${x} ${y} Q ${mx} ${my} ${x2} ${y2}`, width, depth, t0, dur });
+
+      if (depth >= MAX_DEPTH || len < 8) {
+        leafSpots.push({ x: x2, y: y2, t: t0 + dur });
+        return;
+      }
+      if (depth >= 5) leafSpots.push({ x: x2, y: y2, t: t0 + dur });
+
+      const kids = depth < 2 ? 2 : (Math.random() < 0.3 ? 3 : 2);
+      for (let i = 0; i < kids; i++) {
+        const spread = rand(0.22, 0.55);
+        const dir = kids === 2 ? (i === 0 ? -1 : 1) : i - 1;
+        const na = angle + dir * spread + rand(-0.1, 0.1);
+        grow(x2, y2, na, len * rand(0.66, 0.8), Math.max(width * 0.66, 1.2), depth + 1, t0 + dur * 0.8);
+      }
+    })(BASE_X, BASE_Y, Math.PI / 2 + rand(-0.05, 0.05), rand(105, 130), 17, 0, 0);
+
+    // rysowanie gałęzi (animacja stroke-dashoffset = "rośnięcie")
+    let maxT = 0;
+    for (const b of branches) {
+      const p = el("path", {
+        d: b.d,
+        stroke: trunkColor(b.depth),
+        "stroke-width": b.width,
+      }, treeG);
+      const L = p.getTotalLength();
+      p.style.strokeDasharray = L;
+      p.style.strokeDashoffset = L;
+      p.animate(
+        [{ strokeDashoffset: L }, { strokeDashoffset: 0 }],
+        { duration: b.dur, delay: b.t0, easing: "ease-out", fill: "forwards" }
+      );
+      maxT = Math.max(maxT, b.t0 + b.dur);
+    }
+
+    // liście i kwiaty wyskakujące na końcach gałęzi
+    for (const s of leafSpots) {
+      const cluster = 3 + ((Math.random() * 3) | 0);
+      for (let i = 0; i < cluster; i++) {
+        const lx = s.x + rand(-15, 15);
+        const ly = s.y + rand(-15, 15);
+        const isBlossom = Math.random() < 0.08;
+        const fill = isBlossom ? pick(BLOSSOMS) : pick(GREENS);
+
+        const g = el("g", { transform: `translate(${lx} ${ly}) rotate(${rand(0, 360)})` }, leavesG);
+        const shape = isBlossom
+          ? el("circle", { r: rand(3, 4.5), fill }, g)
+          : el("ellipse", { rx: rand(5.5, 8.5), ry: rand(3.5, 5), fill, opacity: rand(0.82, 1) }, g);
+
+        if (!isBlossom) leafData.push({ x: lx, y: ly, fill });
+
+        shape.style.transformBox = "fill-box";
+        shape.style.transformOrigin = "center";
+        shape.style.transform = "scale(0)";
+        const delay = s.t + rand(0, 550);
+        maxT = Math.max(maxT, delay);
+
+        const anim = shape.animate(
+          [{ transform: "scale(0)" }, { transform: "scale(1.25)", offset: 0.7 }, { transform: "scale(1)" }],
+          { duration: rand(320, 600), delay, easing: "ease-out", fill: "forwards" }
+        );
+        anim.onfinish = () => {
+          shape.style.transform = "none";
+          anim.cancel();
+          shape.style.setProperty("--d", rand(2.2, 4.5).toFixed(2) + "s");
+          shape.style.animationDelay = (-rand(0, 4)).toFixed(2) + "s";
+          shape.classList.add("leaf-sway");
+        };
+      }
+    }
+
+    // cień rośnie razem z drzewem
+    shadow.style.transformBox = "fill-box";
+    shadow.style.transformOrigin = "center";
+    shadow.animate(
+      [{ transform: "scale(0.05, 0.4)" }, { transform: "scale(1, 1)" }],
+      { duration: maxT, easing: "ease-out", fill: "forwards" }
+    );
+
+    // po wyrośnięciu — pojedyncze liście zaczynają opadać
+    timers.push(setTimeout(() => {
+      fallTimer = setInterval(spawnFallingLeaf, 1100);
+    }, maxT + 1000));
+  }
+
+  function spawnFallingLeaf() {
+    if (!leafData.length || document.hidden) return;
+    const s = pick(leafData);
+    const e = el("ellipse", { rx: 6, ry: 4, fill: s.fill }, fallingG);
+    const drift = rand(-70, 90);
+    const fallDist = 668 - s.y + rand(-8, 8);
+    if (fallDist <= 20) { e.remove(); return; }
+
+    e.animate(
+      [
+        { transform: `translate(${s.x}px, ${s.y}px) rotate(0deg)`, opacity: 1 },
+        { transform: `translate(${s.x + drift * 0.5 + 26}px, ${s.y + fallDist * 0.4}px) rotate(170deg)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(${s.x + drift - 22}px, ${s.y + fallDist * 0.75}px) rotate(300deg)`, opacity: 0.95, offset: 0.75 },
+        { transform: `translate(${s.x + drift}px, ${s.y + fallDist}px) rotate(430deg)`, opacity: 0 },
+      ],
+      { duration: rand(3800, 6200), easing: "ease-in-out" }
+    ).onfinish = () => e.remove();
+  }
+
+  /* ---------- start ---------- */
+
+  buildSunRays();
+  buildClouds();
+  buildGrass();
+  buildTree();
+
+  $("replant").addEventListener("click", () => {
+    buildGrass();
+    buildTree();
+  });
+})();
+</script>
+</body>
+</html>
