@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silnik W12 — animowany przekrój</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(50, 110, 170, 0.18), transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0 39px, rgba(120, 180, 230, 0.055) 39px 40px),
+      repeating-linear-gradient(90deg, transparent 0 39px, rgba(120, 180, 230, 0.055) 39px 40px),
+      linear-gradient(180deg, #081525 0%, #0b1d33 55%, #071120 100%);
+    color: #d7ecff;
+  }
+
+  svg#scene {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .ui {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+    width: 100%;
+  }
+
+  .ui h1 {
+    font-size: clamp(1.4rem, 3.4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #eaf6ff;
+    text-shadow: 0 0 18px rgba(90, 190, 255, 0.45);
+  }
+
+  .ui p {
+    margin-top: 4px;
+    font-size: clamp(0.78rem, 1.8vw, 0.98rem);
+    color: #9fc9e8;
+    letter-spacing: 0.06em;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 12px 22px;
+    background: rgba(10, 28, 48, 0.72);
+    border: 1px solid rgba(120, 190, 250, 0.28);
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 28px rgba(0, 20, 45, 0.55);
+    user-select: none;
+  }
+
+  .controls button {
+    min-width: 108px;
+    padding: 9px 18px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #06192c;
+    background: linear-gradient(180deg, #8fd8ff, #4fb2ee);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+
+  .controls button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .controls button:active { transform: translateY(1px); }
+
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #b8dcf7;
+    white-space: nowrap;
+  }
+
+  .controls input[type="range"] {
+    width: 170px;
+    accent-color: #5ec4ff;
+    cursor: pointer;
+  }
+
+  .controls .rpm-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #eaf6ff;
+    min-width: 92px;
+    text-align: right;
+  }
+
+  @media (max-width: 640px) {
+    .controls { flex-direction: column; gap: 10px; border-radius: 22px; }
+  }
+
+  .link3d {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 5;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: #cfeaff;
+    text-decoration: none;
+    background: rgba(10, 28, 48, 0.72);
+    border: 1px solid rgba(120, 190, 250, 0.28);
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    transition: filter 0.12s ease;
+  }
+
+  .link3d:hover { filter: brightness(1.25); }
+</style>
+</head>
+<body>
+
+<a class="link3d" href="silnik-w12.html">wersja 3D — obracany model &#8599;</a>
+
+<div class="ui">
+  <h1>SILNIK W12 — ANIMOWANY PRZEKRÓJ</h1>
+  <p>3 ławy cylindrów &times; 4 cylindry &bull; kąt rozwarcia 60&deg; &bull; zwolnione tempo dla czytelności</p>
+</div>
+
+<svg id="scene" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#33506d"/>
+      <stop offset="0.5" stop-color="#5b7fa4"/>
+      <stop offset="1"   stop-color="#2c4560"/>
+    </linearGradient>
+    <linearGradient id="pistonGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"   stop-color="#7c9fc2"/>
+      <stop offset="0.5" stop-color="#4e7396"/>
+      <stop offset="1"   stop-color="#33516f"/>
+    </linearGradient>
+    <linearGradient id="rodGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6c8fb2"/>
+      <stop offset="1" stop-color="#416282"/>
+    </linearGradient>
+    <linearGradient id="oilGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8a33c"/>
+      <stop offset="1" stop-color="#a8641a"/>
+    </linearGradient>
+    <radialGradient id="flashGrad" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"   stop-color="#fff7d6" stop-opacity="1"/>
+      <stop offset="0.35" stop-color="#ffc94d" stop-opacity="0.95"/>
+      <stop offset="0.7" stop-color="#ff7b2d" stop-opacity="0.55"/>
+      <stop offset="1"   stop-color="#ff5a1f" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ==================== SILNIK ==================== -->
+  <g id="engine" transform="translate(600,462)">
+    <!-- podpory silnika -->
+    <path d="M -96 40 L -186 96 L -186 108 L -120 108 L -74 70 Z" fill="#132c47" stroke="#3f6d99" stroke-width="2"/>
+    <path d="M  96 40 L  186 96 L  186 108 L  120 108 L  74 70 Z" fill="#132c47" stroke="#3f6d99" stroke-width="2"/>
+
+    <!-- miska olejowa -->
+    <path d="M -80 58 Q -84 106 -52 110 L 52 110 Q 84 106 80 58 Z" fill="#0d2138" stroke="#3f6d99" stroke-width="2.5"/>
+    <path d="M -70 78 Q -70 100 -46 101 L 46 101 Q 70 100 70 78 Z" fill="url(#oilGrad)" opacity="0.9"/>
+
+    <!-- kadłub / skrzynia korbowa -->
+    <circle r="96" fill="#0e2237" stroke="#4a7aa8" stroke-width="3"/>
+    <circle r="88" fill="none" stroke="#274a6e" stroke-width="1.5" stroke-dasharray="4 7"/>
+
+    <!-- ławy cylindrów (generowane skryptem) -->
+    <g id="banks"></g>
+
+    <!-- wał korbowy (obraca się) -->
+    <g id="crank">
+      <path d="M 0 0 L 46.8 27 A 54 54 0 0 1 -46.8 27 Z" fill="#2b4a68" stroke="#16293e" stroke-width="2.5"/>
+      <rect x="-15" y="-42" width="30" height="50" rx="10" fill="url(#metal)" stroke="#1c3550" stroke-width="2"/>
+      <circle cx="0" cy="44" r="3.4" fill="#9fd2f5"/>
+      <circle cx="0" cy="-34" r="12" fill="#7c9fc2" stroke="#16293e" stroke-width="2.5"/>
+      <circle r="15" fill="#54789c" stroke="#16293e" stroke-width="3"/>
+      <circle r="4.5" fill="#16293e"/>
+    </g>
+  </g>
+
+  <!-- ==================== OBROTOMIERZ ==================== -->
+  <g id="gauge" transform="translate(1042,168)">
+    <circle r="66" fill="rgba(10,28,48,0.8)" stroke="#4a7aa8" stroke-width="2.5"/>
+    <g id="gaugeTicks"></g>
+    <path id="redZone" fill="none" stroke="#ff5a5a" stroke-width="5" opacity="0.85"/>
+    <g id="needle">
+      <line x1="0" y1="10" x2="0" y2="-50" stroke="#ff8c42" stroke-width="3.5" stroke-linecap="round" filter="url(#glow)"/>
+    </g>
+    <circle r="6" fill="#d7ecff"/>
+    <text y="34" text-anchor="middle" font-size="10" fill="#9fc9e8" letter-spacing="1">OBR/MIN</text>
+    <text id="rpmDigital" y="92" text-anchor="middle" font-size="17" font-weight="700" fill="#eaf6ff" font-family="Consolas, monospace">0</text>
+  </g>
+
+  <!-- ==================== KOLEJNOŚĆ ZAPŁONU ==================== -->
+  <g id="firingPanel" transform="translate(52,606)">
+    <rect x="-14" y="-30" width="248" height="158" rx="14" fill="rgba(10,28,48,0.72)" stroke="rgba(120,190,250,0.28)"/>
+    <text x="110" y="-8" text-anchor="middle" font-size="12.5" font-weight="700" fill="#b8dcf7" letter-spacing="1.5">KOLEJNOŚĆ ZAPŁONU</text>
+    <g id="leds"></g>
+  </g>
+
+  <!-- ==================== ETYKIETY ==================== -->
+  <g id="labels" font-size="13" fill="#9fc9e8" letter-spacing="0.5"
+     stroke="none" style="pointer-events:none">
+    <g stroke="#5b8fbe" stroke-width="1" stroke-dasharray="3 4" fill="none" opacity="0.85">
+      <line x1="742" y1="216" x2="608" y2="240"/>
+      <line x1="884" y1="330" x2="792" y2="352"/>
+      <line x1="452" y1="286" x2="584" y2="318"/>
+      <line x1="826" y1="474" x2="626" y2="446"/>
+      <line x1="416" y1="562" x2="552" y2="502"/>
+      <line x1="788" y1="596" x2="648" y2="576"/>
+    </g>
+    <text x="748" y="212">świeca zapłonowa</text>
+    <text x="890" y="328">zawory (ssący / wydechowy)</text>
+    <text x="330" y="282">tłok</text>
+    <text x="832" y="478">korbowód</text>
+    <text x="318" y="568">wał korbowy</text>
+    <text x="794" y="600">miska olejowa</text>
+  </g>
+</svg>
+
+<div class="controls">
+  <button id="toggle">⏸ Pauza</button>
+  <label>
+    Obroty
+    <input type="range" id="rpmSlider" min="30" max="900" step="10" value="240">
+    <span class="rpm-value" id="rpmLabel">240 obr/min</span>
+  </label>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const DEG = Math.PI / 180;
+
+  /* ---------- geometria mechanizmu korbowego ---------- */
+  const R = 34;    // promień wykorbienia
+  const L = 118;   // długość korbowodu
+
+  // Trzy ławy: lewa, środkowa, prawa. `off` rozkłada suwy pracy w cyklu 720°.
+  const BANKS = [
+    { beta: -60, off: 0   },
+    { beta:   0, off: 360 },
+    { beta:  60, off: 0   },
+  ];
+
+  const el = (name, attrs, parent) => {
+    const n = document.createElementNS(SVGNS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+
+  /* ---------- budowa jednej ławy cylindrów ---------- */
+  function buildBank(bank) {
+    const g = el("g", { transform: `rotate(${bank.beta})` }, document.getElementById("banks"));
+
+    // tulejа cylindra — tło (przestrzeń robocza)
+    el("rect", { x: -31, y: -190, width: 62, height: 134, fill: "#091724" }, g);
+
+    // błysk spalania (pod tłokiem w kolejności rysowania — widoczny tylko w komorze)
+    bank.flash = el("circle", { cx: 0, cy: -178, r: 26, fill: "url(#flashGrad)", opacity: 0 }, g);
+
+    // zawory: ssący (niebieski) i wydechowy (pomarańczowy)
+    bank.valveIn = el("g", {}, g);
+    el("line", { x1: -15, y1: -216, x2: -15, y2: -187, stroke: "#7fb6dd", "stroke-width": 4 }, bank.valveIn);
+    el("path", { d: "M -24 -187 L -6 -187 L -10 -180 L -20 -180 Z", fill: "#8fd8ff", stroke: "#1c3550", "stroke-width": 1.4 }, bank.valveIn);
+
+    bank.valveEx = el("g", {}, g);
+    el("line", { x1: 15, y1: -216, x2: 15, y2: -187, stroke: "#dd9a6a", "stroke-width": 4 }, bank.valveEx);
+    el("path", { d: "M 6 -187 L 24 -187 L 20 -180 L 10 -180 Z", fill: "#ffb36b", stroke: "#513018", "stroke-width": 1.4 }, bank.valveEx);
+
+    // korbowód
+    bank.rod = el("line", { x1: 0, y1: 0, x2: 0, y2: -L, stroke: "url(#rodGrad)", "stroke-width": 13, "stroke-linecap": "round" }, g);
+    bank.rodHi = el("line", { x1: 0, y1: 0, x2: 0, y2: -L, stroke: "#8fb3d4", "stroke-width": 3.5, "stroke-linecap": "round", opacity: 0.7 }, g);
+    bank.bigEnd = el("circle", { r: 11, fill: "#54789c", stroke: "#16293e", "stroke-width": 2.5 }, g);
+
+    // tłok
+    bank.piston = el("g", {}, g);
+    el("rect", { x: -29, y: -24, width: 58, height: 46, rx: 4, fill: "url(#pistonGrad)", stroke: "#16293e", "stroke-width": 2 }, bank.piston);
+    el("line", { x1: -29, y1: -16, x2: 29, y2: -16, stroke: "#16293e", "stroke-width": 2 }, bank.piston);
+    el("line", { x1: -29, y1: -10, x2: 29, y2: -10, stroke: "#16293e", "stroke-width": 2 }, bank.piston);
+    el("line", { x1: -29, y1: -4,  x2: 29, y2: -4,  stroke: "#16293e", "stroke-width": 1.4, opacity: 0.7 }, bank.piston);
+    el("circle", { r: 7, fill: "#33516f", stroke: "#16293e", "stroke-width": 2 }, bank.piston);
+
+    // ścianki cylindra (rysowane na końcu — przykrywają brzegi)
+    el("rect", { x: -39, y: -188, width: 8, height: 130, fill: "url(#metal)", stroke: "#1c3550", "stroke-width": 1.5 }, g);
+    el("rect", { x:  31, y: -188, width: 8, height: 130, fill: "url(#metal)", stroke: "#1c3550", "stroke-width": 1.5 }, g);
+
+    // żeberka chłodzące
+    for (let i = 0; i < 4; i++) {
+      const y = -172 + i * 26;
+      el("line", { x1: -46, y1: y, x2: -39, y2: y, stroke: "#3f6d99", "stroke-width": 3 }, g);
+      el("line", { x1: 39,  y1: y, x2: 46,  y2: y, stroke: "#3f6d99", "stroke-width": 3 }, g);
+    }
+
+    // głowica
+    el("rect", { x: -44, y: -218, width: 88, height: 30, rx: 6, fill: "#183350", stroke: "#4a7aa8", "stroke-width": 2.5 }, g);
+    el("circle", { cx: -38, cy: -203, r: 2.6, fill: "#5b8fbe" }, g);
+    el("circle", { cx: 38, cy: -203, r: 2.6, fill: "#5b8fbe" }, g);
+
+    // świeca zapłonowa
+    el("rect", { x: -4, y: -236, width: 8, height: 18, rx: 2, fill: "#7c9fc2", stroke: "#16293e", "stroke-width": 1.5 }, g);
+    el("line", { x1: 0, y1: -218, x2: 0, y2: -206, stroke: "#c9e6ff", "stroke-width": 2 }, g);
+    bank.spark = el("circle", { cx: 0, cy: -204, r: 3.2, fill: "#fff7d6", opacity: 0, filter: "url(#glow)" }, g);
+
+    return bank;
+  }
+
+  BANKS.forEach(buildBank);
+
+  /* ---------- obrotomierz ---------- */
+  const ticks = document.getElementById("gaugeTicks");
+  for (let v = 0; v <= 1000; v += 100) {
+    const a = (-120 + (v / 1000) * 240) * DEG;
+    const big = v % 300 === 0;
+    const r1 = big ? 47 : 52, r2 = 58;
+    el("line", {
+      x1: Math.sin(a) * r1, y1: -Math.cos(a) * r1,
+      x2: Math.sin(a) * r2, y2: -Math.cos(a) * r2,
+      stroke: v >= 700 ? "#ff5a5a" : "#9fc9e8", "stroke-width": big ? 3 : 1.6,
+    }, ticks);
+    if (big) {
+      el("text", {
+        x: Math.sin(a) * 36, y: -Math.cos(a) * 36 + 4,
+        "text-anchor": "middle", "font-size": 11, fill: "#d7ecff", "font-weight": 700,
+      }, ticks).textContent = v / 100;
+    }
+  }
+  {
+    const a1 = (-120 + 0.7 * 240) * DEG, a2 = 120 * DEG, r = 62;
+    document.getElementById("redZone").setAttribute("d",
+      `M ${Math.sin(a1) * r} ${-Math.cos(a1) * r} A ${r} ${r} 0 0 1 ${Math.sin(a2) * r} ${-Math.cos(a2) * r}`);
+  }
+
+  /* ---------- panel kolejności zapłonu ---------- */
+  // Cylindry: ława L = 1–4, Ś = 5–8, P = 9–12. Zapłon co 60° wału (cykl 720°).
+  const FIRING_ORDER = [1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12];
+  const ledsG = document.getElementById("leds");
+  const ledEls = {};
+  const rows = [["L", 1], ["Ś", 5], ["P", 9]];
+  rows.forEach(([name, first], r) => {
+    const y = 26 + r * 36;
+    el("text", { x: 0, y: y + 5, "font-size": 13, "font-weight": 700, fill: "#b8dcf7" }, ledsG).textContent = name;
+    for (let i = 0; i < 4; i++) {
+      const cyl = first + i;
+      const x = 46 + i * 48;
+      ledEls[cyl] = el("circle", { cx: x, cy: y, r: 11, fill: "#ffb63c", stroke: "#4a7aa8", "stroke-width": 1.6, "fill-opacity": 0.08 }, ledsG);
+      el("text", { x: x, y: y + 4, "text-anchor": "middle", "font-size": 10.5, fill: "#d7ecff" }, ledsG).textContent = cyl;
+    }
+  });
+  const ledIntensity = new Array(13).fill(0);
+
+  /* ---------- referencje / stan ---------- */
+  const engineG = document.getElementById("engine");
+  const crankG = document.getElementById("crank");
+  const needle = document.getElementById("needle");
+  const rpmDigital = document.getElementById("rpmDigital");
+  const slider = document.getElementById("rpmSlider");
+  const rpmLabel = document.getElementById("rpmLabel");
+  const toggleBtn = document.getElementById("toggle");
+
+  let running = true;
+  let targetRpm = +slider.value;
+  let rpm = 0;          // rzeczywiste obroty (z bezwładnością)
+  let phi = 0;          // kąt wału [deg]
+
+  slider.addEventListener("input", () => {
+    rpmLabel.textContent = `${slider.value} obr/min`;
+    if (running) targetRpm = +slider.value;
+  });
+
+  toggleBtn.addEventListener("click", () => {
+    running = !running;
+    targetRpm = running ? +slider.value : 0;
+    toggleBtn.textContent = running ? "⏸ Pauza" : "▶ Start";
+  });
+
+  /* ---------- pętla animacji ---------- */
+  const mod = (a, n) => ((a % n) + n) % n;
+  let last = performance.now();
+
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+
+    // bezwładność: silnik płynnie się rozpędza i wybiega po pauzie
+    rpm += (targetRpm - rpm) * Math.min(1, dt * 1.8);
+    if (!running && rpm < 1.5) rpm = 0;
+    phi = mod(phi + rpm * 6 * dt, 1440);
+
+    // delikatna wibracja rosnąca z obrotami
+    const shake = Math.min(1.3, rpm / 550);
+    engineG.setAttribute("transform",
+      `translate(${600 + shake * Math.sin(phi * 2 * DEG)},${462 + shake * Math.cos(phi * 2 * DEG + 1)})`);
+
+    crankG.setAttribute("transform", `rotate(${phi})`);
+
+    for (const b of BANKS) {
+      const a = (phi - b.beta) * DEG;
+      const sa = Math.sin(a), ca = Math.cos(a);
+      const d = R * ca + Math.sqrt(L * L - R * R * sa * sa);
+      const px = R * sa, py = -R * ca;
+
+      b.piston.setAttribute("transform", `translate(0,${-d})`);
+      for (const rod of [b.rod, b.rodHi]) {
+        rod.setAttribute("x1", px); rod.setAttribute("y1", py);
+        rod.setAttribute("x2", 0);  rod.setAttribute("y2", -d);
+      }
+      b.bigEnd.setAttribute("cx", px);
+      b.bigEnd.setAttribute("cy", py);
+
+      // cykl czterosuwowy 0–720°: praca / wydech / ssanie / sprężanie
+      const c = mod(phi - b.beta + b.off, 720);
+      const liftEx = (c > 160 && c < 380) ? Math.sin(Math.PI * (c - 160) / 220) * 9 : 0;
+      const liftIn = (c > 340 && c < 580) ? Math.sin(Math.PI * (c - 340) / 240) * 9 : 0;
+      b.valveEx.setAttribute("transform", `translate(0,${liftEx})`);
+      b.valveIn.setAttribute("transform", `translate(0,${liftIn})`);
+
+      const f = c < 70 ? 1 - c / 70 : 0;
+      b.flash.setAttribute("opacity", f * 0.95);
+      b.flash.setAttribute("r", 20 + 18 * (1 - f));
+      b.spark.setAttribute("opacity", c < 26 ? 1 : 0);
+    }
+
+    // diody kolejności zapłonu
+    if (rpm > 0.5) {
+      const step = Math.floor(mod(phi, 720) / 60);
+      ledIntensity[FIRING_ORDER[step]] = 1;
+    }
+    const decay = Math.exp(-dt * (2.2 + rpm / 90));
+    for (let cyl = 1; cyl <= 12; cyl++) {
+      ledIntensity[cyl] *= decay;
+      ledEls[cyl].setAttribute("fill-opacity", 0.08 + 0.92 * ledIntensity[cyl]);
+    }
+
+    // obrotomierz
+    needle.setAttribute("transform", `rotate(${-120 + Math.min(rpm, 1000) / 1000 * 240})`);
+    rpmDigital.textContent = `${Math.round(rpm)}`;
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

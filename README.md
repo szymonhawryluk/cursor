@@ -3,9 +3,19 @@
 Kolekcja animowanych stron HTML — bez zależności, każdą wystarczy otworzyć w przeglądarce.
 
 - `index.html` — Rosnące drzewo 🌳
-- `silnik-w12.html` — Silnik W12, animowany przekrój ⚙️
+- `silnik-w12.html` — Silnik W12, interaktywny model 3D ⚙️
+- `silnik-w12-2d.html` — Silnik W12, animowany przekrój 2D
 
-## Silnik W12 (`silnik-w12.html`)
+## Silnik W12 3D (`silnik-w12.html`)
+
+Interaktywny, obracany model 3D silnika W12 (three.js — biblioteka dołączona lokalnie w `lib/`, strona działa offline):
+
+- Pełny mechanizm: wał korbowy z 4 wykorbieniami, po 3 korbowody na każdym czopie, 12 tłoków w trzech ławach pod kątem 60°.
+- Obracanie modelu myszką (przeciąganie), zoom kółkiem, przesuwanie prawym przyciskiem + tryb auto-obrotu.
+- Półprzezroczyste tuleje cylindrów, głowice i skrzynia korbowa — suwak przezroczystości bloku pozwala odsłonić mechanizm.
+- Błyski zapłonu w komorach spalania (suw pracy w cyklu 720°), obrotomierz, przycisk **Start/Pauza** z bezwładnością silnika i suwak obrotów.
+
+## Silnik W12 2D (`silnik-w12-2d.html`)
 
 Animowany rysunek techniczny przekroju silnika W12 w stylu blueprint:
 
